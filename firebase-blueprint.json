@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "submissions": {
+      "title": "Submissions",
+      "description": "Avaliações registradas na dinâmica Cubo Biti9",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "userInfo": {
+          "type": "object",
+          "properties": {
+            "nome": { "type": "string" },
+            "empresa": { "type": "string" },
+            "email": { "type": "string" },
+            "telefone": { "type": "string" }
+          }
+        },
+        "answers": {
+          "type": "object",
+          "properties": {
+            "q1_nota": { "type": "number" },
+            "q2_solucao": { "type": "string" },
+            "q3_resolveudor": { "type": "string" },
+            "q3_detalhes": { "type": "string" }
+          }
+        },
+        "prizeWon": { "type": "object" },
+        "emailSent": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userInfo", "answers"]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Agente de Avaliação Cubo (Biti9)",
+  "description": "Assistente de avaliação pós-rodada de conhecimento do evento Cubo Itaú com sorteio de prêmios e automação Biti9.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

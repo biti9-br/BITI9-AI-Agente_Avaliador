@@ -29,9 +29,7 @@ export const InfoStep: React.FC<InfoStepProps> = ({ initialData, onNext }) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const emailTrim = formData.email.trim();
     if (!emailTrim || !emailRegex.test(emailTrim)) {
-      newErrors.email = 'Esse e-mail não parece completo — confirme seu e-mail corporativo.';
-    } else if (!isCorporateEmail(emailTrim)) {
-      newErrors.email = 'Use seu e-mail corporativo (não aceitamos gmail, hotmail, outlook, yahoo, icloud etc.).';
+      newErrors.email = 'Esse e-mail não parece completo — confirme o seu e-mail.';
     }
 
     const phoneDigits = formData.telefone.replace(/\D/g, '');
@@ -133,10 +131,10 @@ export const InfoStep: React.FC<InfoStepProps> = ({ initialData, onNext }) => {
             )}
           </div>
 
-          {/* E-mail Corporativo */}
+          {/* E-mail */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#2BADFF] mb-1.5">
-              E-mail Corporativo <span className="text-[#2BADFF]">*</span>
+              E-mail <span className="text-[#2BADFF]">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -149,7 +147,7 @@ export const InfoStep: React.FC<InfoStepProps> = ({ initialData, onNext }) => {
                   setFormData({ ...formData, email: e.target.value });
                   if (errors.email) setErrors({ ...errors, email: undefined });
                 }}
-                placeholder="seu.nome@empresa.com.br"
+                placeholder="seu.email@exemplo.com"
                 className={`w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border ${
                   errors.email ? 'border-rose-500/80 focus:ring-rose-500' : 'border-white/10 focus:border-[#2BADFF]'
                 } text-white placeholder-slate-600 text-sm focus:outline-none focus:ring-1 focus:ring-[#2BADFF] transition-all`}

@@ -158,25 +158,9 @@ export default function App() {
     if (showAdmin) refreshSubmissions();
   }, [showAdmin]);
 
-  // Handle Info Step Next — verifica de imediato se o e-mail já participou
-  const handleInfoNext = async (data: UserInfo) => {
+  // Handle Info Step Next
+  const handleInfoNext = (data: UserInfo) => {
     setUserInfo(data);
-    setCheckingDuplicate(true);
-    try {
-      const res = await fetch(`/api/submissions/check?email=${encodeURIComponent(data.email)}`);
-      if (res.ok) {
-        const { alreadyVoted } = await res.json();
-        if (alreadyVoted) {
-          setDuplicateInfo({ email: data.email, tecnologia: '' });
-          setCurrentStep('ALREADY_VOTED');
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn('Erro ao checar e-mail:', err);
-    } finally {
-      setCheckingDuplicate(false);
-    }
     setCurrentStep('QUESTIONS');
   };
 
@@ -195,12 +179,6 @@ export default function App() {
           emailSent: false,
         }),
       });
-
-      if (res.status === 409) {
-        setDuplicateInfo({ email: userInfo.email, tecnologia: completedAnswers.q2_solucao });
-        setCurrentStep('ALREADY_VOTED');
-        return;
-      }
 
       if (res.ok) {
         const record: SubmissionRecord = await res.json();
@@ -250,12 +228,6 @@ export default function App() {
             emailSent: false,
           }),
         });
-
-        if (res.status === 409) {
-          setDuplicateInfo({ email: userInfo.email, tecnologia: answers.q2_solucao });
-          setCurrentStep('ALREADY_VOTED');
-          return;
-        }
 
         if (res.ok) {
           const record: SubmissionRecord = await res.json();

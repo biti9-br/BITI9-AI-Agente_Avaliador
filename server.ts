@@ -79,25 +79,12 @@ async function startServer() {
     }
   });
 
-  // Verifica se um e-mail já participou (checagem por e-mail antes de avançar)
+  // Verifica e-mail (sempre autoriza a participação)
   app.get('/api/submissions/check', async (req, res) => {
-    const email = normalize(String(req.query.email || ''));
-    if (!email) {
-      return res.status(400).json({ error: 'Informe o e-mail para verificação.' });
-    }
-    try {
-      const submissions = await enqueue(readSubmissions);
-      const existing = submissions.find(
-        (s: any) => normalize(s.userInfo?.email) === email
-      );
-      res.json({
-        alreadyVoted: !!existing,
-        existingRecord: existing || null,
-      });
-    } catch (error: any) {
-      console.error('[Submissions] Erro ao checar e-mail:', error);
-      res.status(500).json({ error: 'Não foi possível checar o e-mail.' });
-    }
+    res.json({
+      alreadyVoted: false,
+      existingRecord: null,
+    });
   });
 
   // Grava uma avaliação — salva diretamente no Cloud Firestore e no backup local
@@ -110,14 +97,6 @@ async function startServer() {
 
       const result = await enqueue(async () => {
         const submissions = await readSubmissions();
-
-        const email = normalize(userInfo.email);
-        const duplicate = submissions.some(
-          (s: any) => normalize(s.userInfo?.email) === email
-        );
-        if (duplicate) {
-          return { conflict: true };
-        }
 
         const record = {
           id: `sub-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -141,11 +120,6 @@ async function startServer() {
         return { conflict: false, record };
       });
 
-      if (result.conflict) {
-        return res.status(409).json({
-          error: 'Este e-mail já participou da avaliação e da roleta de prêmios. Cada participante pode rodar a roleta apenas 1 vez por e-mail.',
-        });
-      }
       return res.status(201).json(result.record);
     } catch (error: any) {
       console.error('[Submissions] Erro ao gravar avaliação:', error);

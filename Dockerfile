@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copy source files and build production bundle
 COPY . .
@@ -22,7 +22,7 @@ ENV PORT=8080
 
 # Install production dependencies only
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --only=production
 
 # Copy built artifacts
 COPY --from=builder /app/dist ./dist

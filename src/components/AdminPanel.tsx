@@ -25,6 +25,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [activeTab, setActiveTab] = useState<'submissions' | 'prizes'>('submissions');
   const [searchTerm, setSearchTerm] = useState('');
   const [newPrizeLabel, setNewPrizeLabel] = useState('');
+  const [newPrizeIsWinning, setNewPrizeIsWinning] = useState(true);
 
   // Filter submissions by name, email or company
   const filteredSubmissions = submissions.filter((sub) => {
@@ -88,10 +89,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const newPrize: PrizeItem = {
       id: `p-${Date.now()}`,
       label: newPrizeLabel.trim(),
-      description: 'Prêmio configurado pelo organizador Biti9',
-      color: '#2BADFF',
-      iconName: 'Gift',
-      isWinning: true,
+      description: newPrizeIsWinning
+        ? 'Prêmio configurado pelo organizador Biti9'
+        : 'Agradecemos por participar do nosso evento no Cubo!',
+      color: newPrizeIsWinning ? '#2BADFF' : '#1E293B',
+      iconName: newPrizeIsWinning ? 'Gift' : 'Smile',
+      isWinning: newPrizeIsWinning,
     };
     onUpdatePrizes([...prizes, newPrize]);
     setNewPrizeLabel('');
@@ -327,30 +330,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               {/* Add Prize Form */}
               <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[#2BADFF]">
-                  Adicionar Novo Prêmio à Roleta
+                  Adicionar Nova Fatia/Prêmio à Roleta
                 </h3>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={newPrizeLabel}
                     onChange={(e) => setNewPrizeLabel(e.target.value)}
-                    placeholder="Ex: Mentoria Biti9, Brinde Exclusivo..."
+                    placeholder="Ex: Mentoria Biti9, ou Mais sorte na próxima!"
                     className="flex-1 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-[#2BADFF]"
                   />
-                  <button
-                    onClick={handleAddPrize}
-                    className="px-4 py-2 rounded-xl bg-[#2BADFF] hover:bg-[#1a94e0] text-[#0a192f] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Adicionar</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer px-2 py-1 bg-white/5 rounded-lg border border-white/10">
+                      <input
+                        type="checkbox"
+                        checked={newPrizeIsWinning}
+                        onChange={(e) => setNewPrizeIsWinning(e.target.checked)}
+                        className="rounded accent-[#2BADFF]"
+                      />
+                      <span>{newPrizeIsWinning ? 'Prêmio 🏆' : 'Lacuna 🍀'}</span>
+                    </label>
+                    <button
+                      onClick={handleAddPrize}
+                      className="px-4 py-2 rounded-xl bg-[#2BADFF] hover:bg-[#1a94e0] text-[#0a192f] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Adicionar</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {/* Current Prize List */}
               <div className="space-y-2">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Prêmios Ativos ({prizes.length})
+                  Fatias Ativas na Roleta ({prizes.length})
                 </h3>
                 <div className="space-y-2">
                   {prizes.map((p, idx) => (
@@ -363,12 +377,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           {idx + 1}
                         </span>
                         <span className="font-bold text-white">{p.label}</span>
+                        {p.isWinning !== false ? (
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 font-semibold">
+                            Prêmio 🏆
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-semibold">
+                            Lacuna 🍀
+                          </span>
+                        )}
                       </div>
 
                       <button
                         onClick={() => handleRemovePrize(p.id)}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer"
-                        title="Remover Prêmio"
+                        title="Remover Fatia"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

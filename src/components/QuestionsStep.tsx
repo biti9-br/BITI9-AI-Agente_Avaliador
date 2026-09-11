@@ -8,14 +8,20 @@ import { CuboLogo } from './CuboLogo';
 interface QuestionsStepProps {
   initialAnswers: EvaluationAnswers;
   onFinishQuestions: (answers: EvaluationAnswers) => void;
+  submitErrorMsg?: string | null;
+  onClearSubmitError?: () => void;
 }
 
 export const QuestionsStep: React.FC<QuestionsStepProps> = ({
   initialAnswers,
   onFinishQuestions,
+  submitErrorMsg,
+  onClearSubmitError,
 }) => {
   // Current active question index (0, 1, 2)
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(
+    submitErrorMsg ? 1 : 0
+  );
 
   const [answers, setAnswers] = useState<EvaluationAnswers>(initialAnswers);
   const [rating, setRating] = useState<number>(initialAnswers.q1_nota || 0);
@@ -143,8 +149,8 @@ export const QuestionsStep: React.FC<QuestionsStepProps> = ({
                 </p>
               </div>
 
-              {/* Múltipla escolha fixa */}
-              <div className="flex flex-wrap gap-2">
+              {/* Múltipla escolha das 4 Rodadas de Conhecimento */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {TECNOLOGIAS.map((tec) => (
                   <button
                     key={tec}
@@ -153,13 +159,20 @@ export const QuestionsStep: React.FC<QuestionsStepProps> = ({
                       setAnswers({ ...answers, q2_solucao: tec });
                       if (errorMsg) setErrorMsg('');
                     }}
-                    className={`px-4 py-2.5 rounded-full font-bold text-sm border transition-all cursor-pointer ${
+                    className={`p-4 rounded-2xl font-bold text-sm border text-left flex items-center justify-between transition-all cursor-pointer ${
                       answers.q2_solucao === tec
-                        ? 'bg-[#2BADFF] border-[#2BADFF] text-[#0a192f] shadow-[0_0_15px_rgba(43,173,255,0.4)]'
-                        : 'bg-white/5 border-white/10 text-white hover:border-[#2BADFF]/60'
+                        ? 'bg-[#2BADFF] border-[#2BADFF] text-[#0a192f] shadow-[0_0_20px_rgba(43,173,255,0.4)] scale-[1.02]'
+                        : 'bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-[#2BADFF]/60'
                     }`}
                   >
-                    {tec}
+                    <span>{tec}</span>
+                    <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      answers.q2_solucao === tec ? 'border-[#0a192f] bg-[#0a192f]' : 'border-slate-500'
+                    }`}>
+                      {answers.q2_solucao === tec && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#2BADFF]" />
+                      )}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -198,10 +211,17 @@ export const QuestionsStep: React.FC<QuestionsStepProps> = ({
           )}
 
           {/* Validation Error Message */}
-          {errorMsg && (
-            <p className="text-xs text-rose-400 mt-3 flex items-center gap-1 font-medium bg-rose-950/40 border border-rose-900/50 p-2.5 rounded-xl">
-              ⚠️ {errorMsg}
-            </p>
+          {(errorMsg || submitErrorMsg) && (
+            <div className="mt-3 bg-rose-950/50 border border-rose-500/50 p-3 rounded-xl flex flex-col gap-1">
+              <p className="text-xs text-rose-300 font-semibold flex items-center gap-1.5">
+                <span>⚠️</span> {errorMsg || submitErrorMsg}
+              </p>
+              {submitErrorMsg && (
+                <p className="text-[11px] text-slate-400">
+                  Por favor, escolha uma tecnologia diferente da lista na Pergunta 2 ou contate o suporte.
+                </p>
+              )}
+            </div>
           )}
 
           {/* Action Buttons */}

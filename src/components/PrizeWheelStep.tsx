@@ -16,15 +16,35 @@ export const PrizeWheelStep: React.FC<PrizeWheelStepProps> = ({ prizes, onSpinCo
 
   const wheelRef = useRef<HTMLDivElement>(null);
 
-  const handleSpin = () => {
+  const handleSpin = async () => {
     if (isSpinning || prizes.length === 0) return;
 
     setIsSpinning(true);
     setSelectedPrize(null);
 
-    // Pick a random prize slice
-    const winningIndex = Math.floor(Math.random() * prizes.length);
-    const winningPrize = prizes[winningIndex];
+    let winningIndex = 0;
+    let winningPrize: PrizeItem = prizes[0];
+
+    try {
+      const res = await fetch('/api/spin-wheel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prizes }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        winningIndex = data.winningIndex;
+        winningPrize = data.winningPrize;
+      } else {
+        winningIndex = Math.floor(Math.random() * prizes.length);
+        winningPrize = prizes[winningIndex];
+      }
+    } catch (err) {
+      console.warn('Falha ao comunicar com o servidor para sorteio da roleta, usando fallback local:', err);
+      winningIndex = Math.floor(Math.random() * prizes.length);
+      winningPrize = prizes[winningIndex];
+    }
 
     const sliceAngle = 360 / prizes.length;
     // Calculate final rotation degrees so pointer (at 0 deg / 12 o'clock) lands on winning slice
@@ -82,22 +102,22 @@ export const PrizeWheelStep: React.FC<PrizeWheelStepProps> = ({ prizes, onSpinCo
         </div>
 
         {/* WHEEL CONTAINER WITH POINTER */}
-        <div className="relative w-80 h-80 sm:w-96 sm:h-96 my-2 flex items-center justify-center">
+        <div className="relative w-80 h-80 sm:w-96 sm:h-96 my-4 flex items-center justify-center">
           {/* Outer Ring Glow */}
-          <div className="absolute inset-0 rounded-full border-4 border-sky-400/40 shadow-[0_0_30px_rgba(56,189,248,0.3)] pointer-events-none z-10" />
+          <div className="absolute inset-0 rounded-full border border-sky-400/20 shadow-[0_0_40px_rgba(43,173,255,0.15)] pointer-events-none z-10" />
 
           {/* Top Pointer Needle */}
-          <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
-            <div className="w-9 h-9 rounded-full bg-sky-300 border-2 border-white flex items-center justify-center shadow-lg">
-              <div className="w-3.5 h-3.5 rounded-full bg-slate-950" />
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
+            <div className="w-8 h-8 rounded-full bg-white border-2 border-[#2BADFF] flex items-center justify-center shadow-md">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#020617]" />
             </div>
-            <div className="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[20px] border-t-sky-300 -mt-2.5" />
+            <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[16px] border-t-white -mt-2" />
           </div>
 
           {/* THE SPINNING SVG WHEEL */}
           <div
             ref={wheelRef}
-            className="w-full h-full rounded-full overflow-hidden shadow-2xl relative"
+            className="w-full h-full rounded-full overflow-hidden shadow-2xl relative border border-slate-700/50"
             style={{
               transform: `rotate(${rotation}deg)`,
               transition: isSpinning
@@ -107,17 +127,17 @@ export const PrizeWheelStep: React.FC<PrizeWheelStepProps> = ({ prizes, onSpinCo
           >
             <svg viewBox="0 0 300 300" className="w-full h-full">
               <defs>
-                <linearGradient id="sliceGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#0284C7" />
-                  <stop offset="100%" stopColor="#0369A1" />
+                <linearGradient id="sliceWin" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#2BADFF" />
+                  <stop offset="100%" stopColor="#0066CC" />
                 </linearGradient>
-                <linearGradient id="sliceGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="sliceLoss1" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#0F172A" />
                   <stop offset="100%" stopColor="#1E293B" />
                 </linearGradient>
-                <linearGradient id="sliceGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#0369A1" />
-                  <stop offset="100%" stopColor="#0C4A6E" />
+                <linearGradient id="sliceLoss2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#0B1222" />
+                  <stop offset="100%" stopColor="#131C30" />
                 </linearGradient>
               </defs>
 
@@ -125,9 +145,12 @@ export const PrizeWheelStep: React.FC<PrizeWheelStepProps> = ({ prizes, onSpinCo
                 const startAngle = idx * sliceAngle;
                 const endAngle = (idx + 1) * sliceAngle;
 
-                // Alternate slice fills
-                const fills = ['url(#sliceGrad1)', 'url(#sliceGrad2)', 'url(#sliceGrad3)'];
-                const sliceFill = fills[idx % fills.length];
+                const isWinSlice = prize.isWinning !== false;
+                const sliceFill = isWinSlice
+                  ? 'url(#sliceWin)'
+                  : idx % 2 === 0
+                  ? 'url(#sliceLoss1)'
+                  : 'url(#sliceLoss2)';
 
                 // Convert polar to cartesian
                 const startRad = ((startAngle - 90) * Math.PI) / 180;
@@ -146,13 +169,13 @@ export const PrizeWheelStep: React.FC<PrizeWheelStepProps> = ({ prizes, onSpinCo
                 const midRad = ((midAngle - 90) * Math.PI) / 180;
 
                 // Radius distance from center
-                const textX = 150 + 100 * Math.cos(midRad);
-                const textY = 150 + 100 * Math.sin(midRad);
+                const textX = 150 + 108 * Math.cos(midRad);
+                const textY = 150 + 108 * Math.sin(midRad);
 
                 // Rotate text along radial line for legibility
                 let textRotation = midAngle;
                 if (midAngle > 90 && midAngle < 270) {
-                  textRotation += 180; // keep text right side up
+                  textRotation += 180;
                 }
 
                 const numberLabel = `#${idx + 1}`;
@@ -163,20 +186,20 @@ export const PrizeWheelStep: React.FC<PrizeWheelStepProps> = ({ prizes, onSpinCo
                     <path
                       d={pathData}
                       fill={sliceFill}
-                      stroke="#0F172A"
-                      strokeWidth="2"
+                      stroke="rgba(255, 255, 255, 0.08)"
+                      strokeWidth="1"
                     />
-                    {/* Big Bold Number (#1, #2, ... #10) */}
+                    {/* Number Label */}
                     <text
                       x={textX}
                       y={textY}
-                      fill="#FFFFFF"
-                      fontSize="18"
-                      fontWeight="900"
+                      fill={isWinSlice ? '#FFFFFF' : '#94A3B8'}
+                      fontSize={prizes.length > 12 ? '11' : '14'}
+                      fontWeight={isWinSlice ? '800' : '600'}
                       textAnchor="middle"
                       dominantBaseline="middle"
                       transform={`rotate(${textRotation}, ${textX}, ${textY})`}
-                      className="select-none font-sans drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] tracking-wider"
+                      className="select-none font-sans"
                     >
                       {numberLabel}
                     </text>
@@ -185,17 +208,16 @@ export const PrizeWheelStep: React.FC<PrizeWheelStepProps> = ({ prizes, onSpinCo
               })}
 
               {/* Center Hub Logo Button */}
-              <circle cx="150" cy="150" r="34" fill="#090D16" stroke="#38BDF8" strokeWidth="3" />
-              <circle cx="150" cy="150" r="26" fill="#0F172A" />
+              <circle cx="150" cy="150" r="30" fill="#020617" stroke="#2BADFF" strokeWidth="2" />
               <text
                 x="150"
-                y="152"
-                fill="#38BDF8"
-                fontSize="11"
-                fontWeight="900"
+                y="151.5"
+                fill="#2BADFF"
+                fontSize="10"
+                fontWeight="800"
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="tracking-wider"
+                className="tracking-wider select-none font-sans"
               >
                 BITI9
               </text>
@@ -217,32 +239,6 @@ export const PrizeWheelStep: React.FC<PrizeWheelStepProps> = ({ prizes, onSpinCo
             <RotateCw className={`w-5 h-5 ${isSpinning ? 'animate-spin' : ''}`} />
             <span>{isSpinning ? 'Girando a roleta...' : 'Girar roleta agora'}</span>
           </button>
-        </div>
-      </div>
-
-      {/* Clean & Legible List of Prizes */}
-      <div className="w-full mt-8 bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 backdrop-blur-md">
-        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-sky-300" />
-          <span>Prêmios disponíveis nesta rodada:</span>
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {prizes.map((p, index) => (
-            <div
-              key={p.id}
-              className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/50 flex flex-col justify-between"
-            >
-              <div className="flex items-start gap-2">
-                <span className="text-xs font-bold text-sky-300 bg-sky-950/80 px-2 py-0.5 rounded-md border border-sky-800/50 shrink-0">
-                  #{index + 1}
-                </span>
-                <div>
-                  <h4 className="text-xs font-bold text-white leading-tight">{p.label}</h4>
-                  <p className="text-[11px] text-sky-200/80 leading-snug mt-1">{p.description}</p>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 

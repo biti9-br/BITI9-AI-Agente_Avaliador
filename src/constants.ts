@@ -22,6 +22,11 @@ export function isCorporateEmail(email: string): boolean {
 }
 
 // Tecnologias apresentadas na rodada — resposta fixa da Pergunta 2.
-// Essa mesma lista é usada para a regra de "1 voto por tecnologia".
-export const TECNOLOGIAS = ['Google', 'AWS', 'Microsoft', 'Anthropic', 'OpenAI'] as const;
+// Cada participante pode avaliar cada tecnologia apenas 1 vez.
+export const TECNOLOGIAS = [
+  'Google',
+  'AWS + Lovable',
+  'Anthropic + Manus',
+  'Microsoft + Dify',
+] as const;
 export type Tecnologia = (typeof TECNOLOGIAS)[number];

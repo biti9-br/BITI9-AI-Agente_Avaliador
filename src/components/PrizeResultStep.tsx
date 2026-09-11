@@ -22,8 +22,10 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
   const [isError, setIsError] = useState(false);
   const [wasSimulated, setWasSimulated] = useState(false);
 
+  const isWin = prizeWon.isWinning !== false;
+
   const patchEmailStatus = async (emailSent: boolean) => {
-    if (!submissionId) return; // registro pode não ter sido salvo (ver diagnóstico do backend)
+    if (!submissionId) return;
     try {
       await fetch(`/api/submissions/${submissionId}`, {
         method: 'PATCH',
@@ -40,6 +42,10 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
     setIsError(false);
 
     try {
+      const emailMsg = isWin
+        ? `Olá ${userInfo.nome}, você participou da rodada de conhecimento Biti9 no Cubo e ganhou o prêmio "${prizeWon.label}".`
+        : `Olá ${userInfo.nome}, muito obrigado por participar da rodada de conhecimento Biti9 no Cubo! Recebemos sua avaliação.`;
+
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,15 +55,13 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
           empresa: userInfo.empresa,
           premio: prizeWon.label,
           descricao: prizeWon.description,
-          mensagem: `Olá ${userInfo.nome}, você ganhou o prêmio "${prizeWon.label}".`,
+          mensagem: emailMsg,
         }),
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        // FALHA REAL — antes este caso caía no "finally" e mostrava sucesso
-        // mesmo assim. Agora mostramos o erro de verdade e permitimos tentar de novo.
         console.error('Erro ao enviar e-mail via Azure:', data.error || data.details);
         await patchEmailStatus(false);
         setIsError(true);
@@ -66,10 +70,7 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
       }
 
       if (data.status === 'simulated') {
-        // Servidor respondeu OK, mas as variáveis do Azure não estão configuradas
-        // — nenhum e-mail real foi disparado. Deixamos o participante seguir
-        // (não é um erro dele), mas registramos isso no banco para o organizador ver.
-        console.warn('Azure Email simulado: configure COMMUNICATION_SERVICES_CONNECTION_STRING e AZURE_EMAIL_SENDER_ADDRESS para envio real.');
+        console.warn('Azure Email simulado: configure variáveis no servidor para envio real.');
         await patchEmailStatus(false);
         setWasSimulated(true);
       } else {
@@ -82,7 +83,6 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
         onRestart();
       }, 1500);
     } catch (err) {
-      // Falha de rede (ex: backend fora do ar / endpoint 404 em produção)
       console.error('Falha na requisição /api/send-email:', err);
       await patchEmailStatus(false);
       setIsSending(false);
@@ -92,22 +92,34 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
 
   return (
     <div className="w-full max-w-xl mx-auto px-4 py-6 flex flex-col items-center">
-      {/* Robbi9 Mascot Speaking Congratulations */}
+      {/* Robbi9 Mascot Speaking Congratulations / Thank you */}
       <div className="mb-4">
         <Robbi9Mascot
           size="lg"
-          expression={isError ? 'thinking' : isSuccess ? 'excited' : isSending ? 'thinking' : 'excited'}
+          expression={
+            isError
+              ? 'thinking'
+              : isSuccess
+              ? 'happy'
+              : isSending
+              ? 'thinking'
+              : isWin
+              ? 'excited'
+              : 'happy'
+          }
           message={
             isError
               ? `Não consegui confirmar o envio do e-mail agora 😕`
               : isSending || isSuccess
-              ? `Estamos enviando o seu e-mail ✉️`
-              : `Parabéns, ${userInfo.nome.split(' ')[0]}! Você ganhou "${prizeWon.label}"! 🎉`
+              ? `Estamos enviando a confirmação por e-mail ✉️`
+              : isWin
+              ? `Parabéns, ${userInfo.nome.split(' ')[0]}! Você ganhou "${prizeWon.label}"! 🎉`
+              : `Obrigado por participar, ${userInfo.nome.split(' ')[0]}! 🍀`
           }
         />
       </div>
 
-      {/* Main Prize Winner Card */}
+      {/* Main Prize / Result Card */}
       <div className="w-full bg-slate-900/90 border border-slate-700/80 rounded-2xl p-6 sm:p-8 text-center backdrop-blur-xl shadow-2xl relative overflow-hidden animate-fade-in">
         <div className="relative z-10 space-y-6">
           <div>
@@ -115,7 +127,10 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
               {prizeWon.label}
             </h1>
             <p className="text-sm text-sky-200 mt-3 max-w-md mx-auto leading-relaxed">
-              {prizeWon.description || 'Aproveite seu prêmio especial oferecido pela Biti9'}
+              {prizeWon.description ||
+                (isWin
+                  ? 'Aproveite seu prêmio especial oferecido pela Biti9!'
+                  : 'Agradecemos imensamente por sua participação e por compartilhar sua opinião conosco no Cubo!')}
             </p>
           </div>
 
@@ -123,9 +138,7 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
             <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-950/40 border border-rose-900/50 text-left">
               <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <p className="text-xs text-rose-300">
-                Não foi possível confirmar o envio do e-mail. Sua avaliação e o prêmio já foram
-                registrados — tente enviar o e-mail de novo, ou peça para a equipe verificar
-                depois no Painel do Evento.
+                Não foi possível confirmar o envio do e-mail. Sua avaliação já foi registrada no sistema.
               </p>
             </div>
           )}
@@ -145,7 +158,7 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
               {isSending ? (
                 <>
                   <Loader2 className="w-6 h-6 animate-spin text-slate-950" />
-                  <span className="text-base">Estamos enviando o seu e-mail</span>
+                  <span className="text-base">Enviando e-mail...</span>
                 </>
               ) : isSuccess ? (
                 <>
@@ -157,7 +170,7 @@ export const PrizeResultStep: React.FC<PrizeResultStepProps> = ({
               ) : (
                 <>
                   <Check className="w-7 h-7 text-slate-950 stroke-[3]" />
-                  <span>OK</span>
+                  <span>Concluir</span>
                 </>
               )}
             </button>

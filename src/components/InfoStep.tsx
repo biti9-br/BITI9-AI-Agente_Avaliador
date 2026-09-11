@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Building2, Mail, Phone, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { User, Building2, Mail, Phone, ArrowRight, CheckCircle2, ShieldCheck, X } from 'lucide-react';
 import { UserInfo } from '../types';
 import { isCorporateEmail } from '../constants';
 import { Robbi9Mascot } from './Robbi9Mascot';
@@ -11,9 +11,13 @@ interface InfoStepProps {
 }
 
 export const InfoStep: React.FC<InfoStepProps> = ({ initialData, onNext }) => {
-  const [formData, setFormData] = useState<UserInfo>(initialData);
+  const [formData, setFormData] = useState<UserInfo>({
+    ...initialData,
+    aceiteLgpd: initialData.aceiteLgpd ?? false,
+  });
   const [errors, setErrors] = useState<Partial<Record<keyof UserInfo, string>>>({});
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showLgpdModal, setShowLgpdModal] = useState(false);
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof UserInfo, string>> = {};
@@ -35,6 +39,10 @@ export const InfoStep: React.FC<InfoStepProps> = ({ initialData, onNext }) => {
     const phoneDigits = formData.telefone.replace(/\D/g, '');
     if (!formData.telefone.trim() || phoneDigits.length < 8) {
       newErrors.telefone = 'Por favor, digite um número de telefone com pelo menos 8 dígitos.';
+    }
+
+    if (!formData.aceiteLgpd) {
+      newErrors.aceiteLgpd = 'Por favor, aceite os Termos de Privacidade (LGPD) para prosseguir.';
     }
 
     setErrors(newErrors);
@@ -189,8 +197,49 @@ export const InfoStep: React.FC<InfoStepProps> = ({ initialData, onNext }) => {
             )}
           </div>
 
+          {/* Termos LGPD - Obrigatório */}
+          <div className={`pt-2 p-3 rounded-2xl border transition-all ${
+            errors.aceiteLgpd
+              ? 'bg-rose-950/20 border-rose-500/60'
+              : formData.aceiteLgpd
+              ? 'bg-sky-950/20 border-sky-500/30'
+              : 'bg-white/5 border-white/10'
+          }`}>
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                required
+                checked={formData.aceiteLgpd || false}
+                onChange={(e) => {
+                  setFormData({ ...formData, aceiteLgpd: e.target.checked });
+                  if (errors.aceiteLgpd) setErrors({ ...errors, aceiteLgpd: undefined });
+                }}
+                className="mt-0.5 w-4 h-4 rounded border-slate-700 bg-white/10 text-[#2BADFF] focus:ring-[#2BADFF] cursor-pointer shrink-0"
+              />
+              <span className="text-xs text-slate-300 leading-relaxed">
+                <strong className="text-white font-semibold">Obrigatório:</strong> Li e concordo com os{' '}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowLgpdModal(true);
+                  }}
+                  className="text-[#2BADFF] font-semibold underline hover:text-sky-300 transition-colors inline cursor-pointer"
+                >
+                  Termos de Privacidade e Proteção de Dados (LGPD)
+                </button>{' '}
+                da Biti9 para participação no evento Cubo. <span className="text-[#2BADFF]">*</span>
+              </span>
+            </label>
+            {errors.aceiteLgpd && (
+              <p className="text-xs text-rose-400 mt-2 pl-1 flex items-center gap-1 font-semibold">
+                ⚠️ {errors.aceiteLgpd}
+              </p>
+            )}
+          </div>
+
           {/* Action Button */}
-          <div className="pt-4">
+          <div className="pt-3">
             <button
               type="submit"
               className="w-full py-3.5 px-6 rounded-xl bg-[#2BADFF] hover:bg-[#1a94e0] text-[#0a192f] font-bold text-base shadow-[0_0_20px_rgba(43,173,255,0.4)] transition-all flex items-center justify-center gap-2 group cursor-pointer"
@@ -206,6 +255,76 @@ export const InfoStep: React.FC<InfoStepProps> = ({ initialData, onNext }) => {
       <div className="mt-8 flex flex-col items-center justify-center">
         <CuboLogo size="lg" />
       </div>
+
+      {/* LGPD Modal */}
+      {showLgpdModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a192f]/85 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-[#0a192f] border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-[#2BADFF]/20 text-[#2BADFF]">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Termos de Privacidade (LGPD)</h3>
+                  <p className="text-xs text-slate-400">Biti9 Automações & Evento Cubo Itaú</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowLgpdModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto pr-2 space-y-4 text-xs text-slate-300 leading-relaxed flex-1">
+              <p>
+                A <strong>Biti9 Automações e Tecnologia</strong> compromete-se com a segurança, transparência e proteção dos dados pessoais de todos os participantes do evento Cubo Itaú, em conformidade com a <strong>Lei Geral de Proteção de Dados Pessoais (LGPD - Lei nº 13.709/2018)</strong>.
+              </p>
+
+              <div className="bg-white/5 border border-white/10 p-3.5 rounded-xl space-y-2">
+                <h4 className="font-bold text-white text-sm">1. Coleta e Finalidade dos Dados</h4>
+                <p>
+                  Os dados fornecidos (Nome Completo, Empresa, E-mail e Telefone) serão utilizados exclusivamente para:
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-slate-300">
+                  <li>Identificação e registro na rodada de conhecimento;</li>
+                  <li>Validação no sorteio e entrega dos prêmios na roleta;</li>
+                  <li>Envio de comprovante da avaliação e contato direto da equipe Biti9 referente às soluções tecnológicas apresentadas.</li>
+                </ul>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 p-3.5 rounded-xl space-y-2">
+                <h4 className="font-bold text-white text-sm">2. Armazenamento e Segurança</h4>
+                <p>
+                  Seus dados são armazenados em ambiente seguro criptografado com acesso restrito apenas aos profissionais autorizados da Biti9. Não comercializamos e não compartilhamos seus dados com terceiros para fins publicitários não relacionados.
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 p-3.5 rounded-xl space-y-2">
+                <h4 className="font-bold text-white text-sm">3. Direitos do Titular</h4>
+                <p>
+                  Você possui total direito de solicitar a confirmação da existência de tratamento, correção de dados incompletos ou a eliminação dos seus dados a qualquer momento pelos canais oficiais da Biti9.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-white/10 mt-4 flex justify-end">
+              <button
+                onClick={() => {
+                  setFormData((prev) => ({ ...prev, aceiteLgpd: true }));
+                  if (errors.aceiteLgpd) setErrors((prev) => ({ ...prev, aceiteLgpd: undefined }));
+                  setShowLgpdModal(false);
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-[#2BADFF] text-[#0a192f] font-bold text-sm shadow-[0_0_15px_rgba(43,173,255,0.4)] hover:bg-[#1a94e0] transition-colors cursor-pointer text-center"
+              >
+                Concordar e Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {showSummaryModal && (

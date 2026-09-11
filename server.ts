@@ -15,6 +15,7 @@ dotenv.config();
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'submissions.json');
+const SPINS_FILE = path.join(DATA_DIR, 'spins.json');
 
 async function ensureDataFile() {
   await fs.mkdir(DATA_DIR, { recursive: true });
@@ -57,6 +58,16 @@ function normalize(str: string) {
   return String(str || '').trim().toLowerCase();
 }
 
+function isTestEmail(emailStr: string): boolean {
+  if (!emailStr) return false;
+  const lower = normalize(emailStr);
+  return (
+    lower === 'ana.lopes@biti9.com.br' ||
+    lower.includes('teste') ||
+    lower.includes('test')
+  );
+}
+
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -79,12 +90,98 @@ async function startServer() {
     }
   });
 
-  // Verifica e-mail (sempre autoriza a participação)
+  // Verifica e-mail e histórico de tecnologias avaliadas pelo usuário
   app.get('/api/submissions/check', async (req, res) => {
-    res.json({
-      alreadyVoted: false,
-      existingRecord: null,
-    });
+    const email = normalize(String(req.query.email || ''));
+    if (!email || isTestEmail(email)) {
+      return res.json({ evaluatedTechs: [], hasSpunWheel: false });
+    }
+    try {
+      const submissions = await enqueue(readSubmissions);
+      const userSubmissions = submissions.filter(
+        (s: any) => normalize(s.userInfo?.email) === email
+      );
+      const evaluatedTechs = userSubmissions.map((s: any) => s.answers?.q2_solucao).filter(Boolean);
+      const hasSpunWheel = userSubmissions.length > 0;
+      res.json({
+        evaluatedTechs,
+        hasSpunWheel,
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao verificar e-mail.' });
+    }
+  });
+
+  // Endpoint do sorteio da roleta: a cada 3 giros, 2 perdem e 1 ganha (1 a cada 3 ganha)
+  app.post('/api/spin-wheel', async (req, res) => {
+    try {
+      const { prizes } = req.body || {};
+      if (!Array.isArray(prizes) || prizes.length === 0) {
+        return res.status(400).json({ error: 'Lista de prêmios inválida.' });
+      }
+
+      const result = await enqueue(async () => {
+        await fs.mkdir(DATA_DIR, { recursive: true });
+        let spinsCount = 0;
+        try {
+          const raw = await fs.readFile(SPINS_FILE, 'utf-8');
+          const data = JSON.parse(raw);
+          spinsCount = Number(data.spinsCount || 0);
+        } catch {
+          spinsCount = 0;
+        }
+
+        spinsCount += 1;
+        await fs.writeFile(SPINS_FILE, JSON.stringify({ spinsCount }), 'utf-8');
+
+        // Regra exata: A cada 3 pessoas que participarem, 2 perdem e 1 ganha.
+        // spinsCount % 3 === 0 resulta em vitória (1 a cada 3).
+        const isWinningSpin = (spinsCount % 3 === 0);
+
+        const winningPrizes = prizes.filter((p: any) => p.isWinning !== false);
+        const losingPrizes = prizes.filter((p: any) => p.isWinning === false);
+
+        let targetPrize: any;
+
+        if (isWinningSpin) {
+          // Escolhe um prêmio vencedor real
+          const pool = winningPrizes.length > 0 ? winningPrizes : prizes;
+          targetPrize = pool[Math.floor(Math.random() * pool.length)];
+        } else {
+          // Escolhe um item de lacuna / sem prêmio
+          if (losingPrizes.length > 0) {
+            targetPrize = losingPrizes[Math.floor(Math.random() * losingPrizes.length)];
+          } else {
+            targetPrize = {
+              id: 'loss-default',
+              label: 'Mais sorte na próxima! 🍀',
+              description: 'Agradecemos imensamente pela sua participação e pelo valioso feedback na rodada de conhecimento!',
+              color: '#0F172A',
+              iconName: 'Smile',
+              isWinning: false,
+            };
+          }
+        }
+
+        // Descobre o índice da fatia correspondente na roleta
+        let winningIndex = prizes.findIndex((p: any) => p.id === targetPrize.id);
+        if (winningIndex === -1) {
+          winningIndex = 0;
+        }
+
+        return {
+          spinNumber: spinsCount,
+          isWinningSpin,
+          winningIndex,
+          winningPrize: targetPrize,
+        };
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('[SpinWheel] Erro ao processar o giro da roleta:', error);
+      res.status(500).json({ error: 'Falha ao realizar o sorteio na roleta.' });
+    }
   });
 
   // Grava uma avaliação — salva diretamente no Cloud Firestore e no backup local
@@ -95,8 +192,32 @@ async function startServer() {
         return res.status(400).json({ error: 'Dados incompletos para gravar a avaliação.' });
       }
 
+      const email = normalize(userInfo.email);
+      const tech = normalize(answers.q2_solucao);
+      const isBypassUser = isTestEmail(email);
+
       const result = await enqueue(async () => {
         const submissions = await readSubmissions();
+
+        // 1. Regra: Cada participante (por e-mail) só pode avaliar cada tecnologia 1 VEZ (e-mails de teste ignoram este bloqueio)
+        const alreadyEvaluatedThisTech = !isBypassUser && submissions.some(
+          (s: any) =>
+            normalize(s.userInfo?.email) === email &&
+            normalize(s.answers?.q2_solucao) === tech
+        );
+
+        if (alreadyEvaluatedThisTech) {
+          return {
+            duplicateTech: true,
+            techName: answers.q2_solucao,
+          };
+        }
+
+        // 2. Regra: A roleta de prêmios só é liberada na 1ª avaliação do participante (e-mails de teste sempre têm acesso)
+        const previousUserSubmissions = submissions.filter(
+          (s: any) => normalize(s.userInfo?.email) === email
+        );
+        const isFirstSubmissionForUser = isBypassUser || previousUserSubmissions.length === 0;
 
         const record = {
           id: `sub-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -117,10 +238,25 @@ async function startServer() {
         // Grava no arquivo local
         submissions.unshift(record);
         await fs.writeFile(DATA_FILE, JSON.stringify(submissions, null, 2), 'utf-8');
-        return { conflict: false, record };
+
+        return {
+          duplicateTech: false,
+          record,
+          canSpinWheel: isFirstSubmissionForUser, // Apenas a 1ª avaliação dá direito ao giro da roleta
+        };
       });
 
-      return res.status(201).json(result.record);
+      if (result.duplicateTech) {
+        return res.status(409).json({
+          error: `Você já enviou uma avaliação para a rodada do ${result.techName}. Cada participante pode avaliar cada tecnologia apenas 1 vez.`,
+          techName: result.techName,
+        });
+      }
+
+      return res.status(201).json({
+        record: result.record,
+        canSpinWheel: result.canSpinWheel,
+      });
     } catch (error: any) {
       console.error('[Submissions] Erro ao gravar avaliação:', error);
       res.status(500).json({ error: 'Não foi possível gravar a avaliação.' });

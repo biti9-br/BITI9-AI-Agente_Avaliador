@@ -3,11 +3,12 @@ export interface UserInfo {
   empresa: string;
   email: string;
   telefone: string;
+  aceiteLgpd?: boolean;
 }
 
 export interface EvaluationAnswers {
   q1_nota: number;        // 1 a 5 (escala fixa)
-  q2_solucao: string;     // Google | AWS | Microsoft | Anthropic | OpenAI (fixo)
+  q2_solucao: string;     // Google | AWS + Lovable | Anthropic + Manus | Microsoft + Dify
   q3_resolveudor: string; // Conseguimos resolver uma dor real do dia a dia
   q3_detalhes?: string;
 }

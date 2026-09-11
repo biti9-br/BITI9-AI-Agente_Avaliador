@@ -8,7 +8,7 @@ import { PrizeWheelStep } from './components/PrizeWheelStep';
 import { PrizeResultStep } from './components/PrizeResultStep';
 import { AdminPanel } from './components/AdminPanel';
 
-// Default list of prizes as requested
+// Default list of prizes with a 2:1 ratio of losing slices (lacunas) to winning prizes
 const DEFAULT_PRIZES: PrizeItem[] = [
   {
     id: '1',
@@ -20,6 +20,22 @@ const DEFAULT_PRIZES: PrizeItem[] = [
   },
   {
     id: '2',
+    label: 'Mais sorte na próxima! 🍀',
+    description: 'Agradecemos muito pela sua participação e pelo valioso feedback na rodada de conhecimento Cubo!',
+    color: '#0F172A',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '3',
+    label: 'Não foi desta vez 🎯',
+    description: 'Agradecemos imensamente a sua presença na dinâmica do evento Cubo!',
+    color: '#1E293B',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '4',
     label: '1h de Consultoria em IA',
     description: 'Sessão personalizada com especialista para ajudar o ganhador a aplicar IA em um desafio real.',
     color: '#0B1F3A',
@@ -27,7 +43,23 @@ const DEFAULT_PRIZES: PrizeItem[] = [
     isWinning: true,
   },
   {
-    id: '3',
+    id: '5',
+    label: 'Quase lá! 🚀',
+    description: 'Obrigado por participar ativamente e contribuir para nossa dinâmica!',
+    color: '#0F172A',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '6',
+    label: 'Sem prêmio desta vez 🍀',
+    description: 'Sua opinião é fundamental para a evolução do ecossistema Biti9 no Cubo!',
+    color: '#1E293B',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '7',
     label: 'IA na Prática — Sessão Exclusiva',
     description: 'Uma experiência hands-on para criar uma solução utilizando IA.',
     color: '#00D2FE',
@@ -35,7 +67,23 @@ const DEFAULT_PRIZES: PrizeItem[] = [
     isWinning: true,
   },
   {
-    id: '4',
+    id: '8',
+    label: 'Obrigado pela presença! ✨',
+    description: 'A Biti9 agradece por compartilhar suas percepções e experiências na rodada de conhecimento!',
+    color: '#0F172A',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '9',
+    label: 'Acompanhe as novidades 🚀',
+    description: 'Fique atento às soluções de IA e automação da Biti9 no ecossistema do Cubo Itaú!',
+    color: '#1E293B',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '10',
     label: 'Desafio de Automação RPA',
     description: 'O ganhador apresenta um processo e recebe uma sessão para identificar como automatizá-lo.',
     color: '#1E293B',
@@ -43,7 +91,23 @@ const DEFAULT_PRIZES: PrizeItem[] = [
     isWinning: true,
   },
   {
-    id: '5',
+    id: '11',
+    label: 'Agradecemos seu feedback! 💬',
+    description: 'Sua resposta nos ajuda a aprimorar constantemente as sessões de conhecimento!',
+    color: '#0F172A',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '12',
+    label: 'Foi por pouco! 🎯',
+    description: 'Obrigado por dedicar um tempo para avaliar nossa rodada no Cubo!',
+    color: '#1E293B',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '13',
     label: '1h de Mentoria em IA',
     description: 'Uma conversa individual para explorar ferramentas, produtividade e aplicações de IA.',
     color: '#0284C7',
@@ -51,31 +115,23 @@ const DEFAULT_PRIZES: PrizeItem[] = [
     isWinning: true,
   },
   {
-    id: '6',
-    label: 'AI Prompt Masterclass',
-    description: 'Sessão exclusiva para aprender a criar prompts mais eficientes e obter melhores resultados com IA.',
+    id: '14',
+    label: 'Mais sorte na próxima! 🍀',
+    description: 'Acompanhe as próximas novidades da Biti9 e do Cubo Itaú!',
     color: '#0F172A',
-    iconName: 'Sparkles',
-    isWinning: true,
+    iconName: 'Smile',
+    isWinning: false,
   },
   {
-    id: '7',
-    label: 'AI Tools Experience',
-    description: 'Uma experiência guiada explorando Copilot + Gemini + Manus + Google AI, com exemplos práticos.',
-    color: '#0284C7',
-    iconName: 'Wrench',
-    isWinning: true,
+    id: '15',
+    label: 'Biti9 no Cubo 🏢',
+    description: 'Continue conectado com nossas inovações em Inteligência Artificial e Automação.',
+    color: '#1E293B',
+    iconName: 'Smile',
+    isWinning: false,
   },
   {
-    id: '8',
-    label: 'Seu Copilot Personalizado',
-    description: 'Uma sessão para entender como configurar e utilizar melhor o Copilot no dia a dia.',
-    color: '#0369A1',
-    iconName: 'Bot',
-    isWinning: true,
-  },
-  {
-    id: '9',
+    id: '16',
     label: '🏆 AI POWER HOUR',
     description: '1 hora. 1 especialista. 1 desafio. Uma sessão exclusiva para transformar uma ideia em uma possibilidade real com IA.',
     color: '#0284C7',
@@ -83,12 +139,20 @@ const DEFAULT_PRIZES: PrizeItem[] = [
     isWinning: true,
   },
   {
-    id: '10',
-    label: '🏆 AI MASTER SESSION',
-    description: 'Uma hora exclusiva com um especialista para levar seu uso de IA para outro nível.',
-    color: '#0B1F3A',
-    iconName: 'Award',
-    isWinning: true,
+    id: '17',
+    label: 'Não foi desta vez 🍀',
+    description: 'Muito obrigado por sua participação na rodada de conhecimento Biti9!',
+    color: '#0F172A',
+    iconName: 'Smile',
+    isWinning: false,
+  },
+  {
+    id: '18',
+    label: 'Sem prêmio desta vez 🎯',
+    description: 'Agradecemos sua contribuição e presença em nosso estande!',
+    color: '#1E293B',
+    iconName: 'Smile',
+    isWinning: false,
   },
 ];
 
@@ -112,22 +176,32 @@ export default function App() {
   });
 
   const [wonPrize, setWonPrize] = useState<PrizeItem | null>(null);
-  // id do registro já gravado no servidor para este participante (usado para
-  // atualizar o status real de envio de e-mail depois)
   const [currentSubmissionId, setCurrentSubmissionId] = useState<string | null>(null);
   const [duplicateInfo, setDuplicateInfo] = useState<{ email: string; tecnologia: string } | null>(null);
   const [, setCheckingDuplicate] = useState(false);
+  const [canSpinWheel, setCanSpinWheel] = useState<boolean>(true);
+  const [submitErrorMsg, setSubmitErrorMsg] = useState<string | null>(null);
 
   // Prêmios continuam configuráveis localmente (não fazem parte do
   // diagnóstico de "banco de dados" — só as avaliações precisavam ser
   // compartilhadas entre participantes/organizadores).
   const [prizes, setPrizes] = useState<PrizeItem[]>(() => {
-    const saved = localStorage.getItem('cubo_biti9_prizes_v2');
-    return saved ? JSON.parse(saved) : DEFAULT_PRIZES;
+    try {
+      const saved = localStorage.getItem('cubo_biti9_prizes_v5');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= 12 && parsed.some((p: any) => p.isWinning === false)) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return DEFAULT_PRIZES;
   });
 
   useEffect(() => {
-    localStorage.setItem('cubo_biti9_prizes_v2', JSON.stringify(prizes));
+    localStorage.setItem('cubo_biti9_prizes_v5', JSON.stringify(prizes));
   }, [prizes]);
 
   // ==========================================================================
@@ -168,6 +242,7 @@ export default function App() {
   const handleQuestionsFinish = async (completedAnswers: EvaluationAnswers) => {
     setAnswers(completedAnswers);
     setCheckingDuplicate(true);
+    setSubmitErrorMsg(null);
     try {
       const res = await fetch('/api/submissions', {
         method: 'POST',
@@ -180,17 +255,32 @@ export default function App() {
         }),
       });
 
+      if (res.status === 409) {
+        const errData = await res.json();
+        setSubmitErrorMsg(errData.error || `Você já avaliou a rodada do ${completedAnswers.q2_solucao}. Selecione outra tecnologia.`);
+        setCheckingDuplicate(false);
+        return;
+      }
+
       if (res.ok) {
-        const record: SubmissionRecord = await res.json();
+        const data = await res.json();
+        const record: SubmissionRecord = data.record || data;
+        const eligibleForWheel = data.canSpinWheel !== undefined ? data.canSpinWheel : true;
+
+        setCanSpinWheel(eligibleForWheel);
         setCurrentSubmissionId(record.id);
         setSubmissions((prev) => [record, ...prev]);
+        setCurrentStep('SUBMITTING');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setSubmitErrorMsg(errData.error || 'Não foi possível gravar a avaliação. Tente novamente.');
       }
     } catch (err) {
       console.warn('Falha ao gravar avaliação no servidor:', err);
+      setSubmitErrorMsg('Erro de conexão com o servidor. Tente novamente.');
     } finally {
       setCheckingDuplicate(false);
     }
-    setCurrentStep('SUBMITTING');
   };
 
   // Handle Go to Wheel from Submission Step
@@ -249,6 +339,7 @@ export default function App() {
       empresa: '',
       email: '',
       telefone: '',
+      aceiteLgpd: false,
     });
     setAnswers({
       q1_nota: 0,
@@ -259,6 +350,8 @@ export default function App() {
     setWonPrize(null);
     setCurrentSubmissionId(null);
     setDuplicateInfo(null);
+    setSubmitErrorMsg(null);
+    setCanSpinWheel(true);
     setCurrentStep('INFO');
   };
 
@@ -311,6 +404,8 @@ export default function App() {
           <QuestionsStep
             initialAnswers={answers}
             onFinishQuestions={handleQuestionsFinish}
+            submitErrorMsg={submitErrorMsg}
+            onClearSubmitError={() => setSubmitErrorMsg(null)}
           />
         )}
 
@@ -320,12 +415,12 @@ export default function App() {
               <div className="w-14 h-14 rounded-2xl bg-[#2BADFF]/10 border border-[#2BADFF]/20 text-[#2BADFF] flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(43,173,255,0.2)]">
                 <span className="text-2xl">🎁</span>
               </div>
-              <h1 className="text-xl font-bold text-white">Acesso à Roleta de Prêmios Indisponível</h1>
+              <h1 className="text-xl font-bold text-white">Avaliação Já Realizada</h1>
               <p className="text-sm text-slate-300 leading-relaxed">
-                O e-mail <strong className="text-[#2BADFF]">{duplicateInfo.email}</strong> já participou da dinâmica e já teve acesso à roleta de prêmios do evento Cubo.
+                O e-mail <strong className="text-[#2BADFF]">{duplicateInfo.email}</strong> já enviou uma avaliação para a tecnologia <strong className="text-white">"{duplicateInfo.tecnologia}"</strong>.
               </p>
               <p className="text-xs text-slate-400">
-                Cada participante tem direito a acessar a roleta de prêmios apenas 1 vez por e-mail.
+                Cada participante pode avaliar cada tecnologia da rodada apenas 1 vez.
               </p>
               <button
                 onClick={handleResetForm}
@@ -338,7 +433,12 @@ export default function App() {
         )}
 
         {currentStep === 'SUBMITTING' && (
-          <SubmissionSuccessStep onGoToWheel={handleGoToWheel} />
+          <SubmissionSuccessStep
+            canSpinWheel={canSpinWheel}
+            technologyName={answers.q2_solucao}
+            onGoToWheel={handleGoToWheel}
+            onResetForm={handleResetForm}
+          />
         )}
 
         {currentStep === 'WHEEL' && (
